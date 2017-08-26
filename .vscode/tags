@@ -1,0 +1,13 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+area	../test.py	/^def area(width, height):$/;"	kind:function	line:15
+h	../test.py	/^h = 5$/;"	kind:variable	line:23
+pay	../test.py	/^def pay(x,n):$/;"	kind:function	line:4
+print_welcome	../test.py	/^def print_welcome(name):$/;"	kind:function	line:18
+test.py	../test.py	1;"	kind:file	line:1
+w	../test.py	/^w = 4$/;"	kind:variable	line:22
+zui	../test.py	/^zui=pay(5,2)$/;"	kind:variable	line:11
