@@ -1,0 +1,8 @@
+通过生成式,批量自动生成列表
+
+[format for x in xxx/range(xx)]
+
+如:
+[x for x in range(10) if x % 2 == 0] =[0,2,4,6,8]
+支持多层循环全排列:
+[m + n for m in 'ABC' for n in 'XYZ'] = ['AX', 'AY', 'AZ', 'BX', 'BY', 'BZ', 'CX', 'CY', 'CZ']
