@@ -1,0 +1,7 @@
+map 与reduce实际上就是一个分治与迭代的过程
+map(fun,list)=[fun(list[0]),fun(list[1]),fun(list[2]),fun(list[3]),...]
+reduce(fun,list)=[fun(list[3],fun(list[2],fun(list[0],list[1])))...]
+map 接收只有一个参数的函数,这个函数对列表中每个元素进行操作后返回一个新的列表
+reduce 接收两个参数的函数,这个函数递归的对上一次操作的结果和当前参数进行计算后返回一个值
+
+二者可以互相结合使用.
