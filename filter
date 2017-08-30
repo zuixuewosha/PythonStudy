@@ -1,0 +1,11 @@
+filter 实际上和map用法类似,接收一个函数和序列.但是其需要一个过滤函数,根据过滤函数返回的只是bool还是false来进行过滤.
+
+filter(fun,list)
+根据fun(list[i])的返回值来确定是否在新的列表中保存list[i]这个元素
+
+例如，在一个list中，删掉偶数，只保留奇数，可以这么写：
+def is_odd(n):
+    return n % 2 == 1
+
+list(filter(is_odd, [1, 2, 4, 5, 6, 9, 10, 15]))
+# 结果: [1, 5, 9, 15]

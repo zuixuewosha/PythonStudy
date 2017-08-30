@@ -1,0 +1,4 @@
+sorted 是一个排序函数,将key函数的返回结果进行排序,如果排序顺序不正确,可用reverse=True来逆序排列
+
+>>> sorted(['bob', 'about', 'Zoo', 'Credit'], key=str.lower, reverse=True)
+['Zoo', 'Credit', 'bob', 'about']
