@@ -1,0 +1,6 @@
+lambda x,y:x*y = def fun(x,y) return x*y
+lambda也叫匿名函数
+可以把lambda赋给变量,通过类似正常函数的方式调用
+fun=lambda x,y:x*y 
+>>fun(2,3)
+>>6
