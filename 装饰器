@@ -1,0 +1,445 @@
+装饰器(decorator)
+--------------------------------------
+装饰器的本质实际上是个语法糖,用于当你想改变一个函数的功能,但是却不能改变其定义的情况下
+,增加一个装饰器对这个函数进行一次装饰(封装???)
+@bar  
+def foo():  
+    print "foo"  
+其等价于:
+def foo():  
+    print "foo"  
+foo = bar(foo)  
+--------------------------------------
+类的装饰器
+类的装饰器不常用，因此只简单介绍。
+>>>>>>>>>>>>>>>>>>>>>>>
+def bar(dummy):  
+    print 'bar'  
+  
+def inject(cls):  
+    cls.bar = bar  
+    return cls  
+ 
+@inject  
+class Foo(object):  
+    pass  
+  
+foo = Foo()  
+foo.bar()  
+上述代码的 inject 装饰器为类动态的添加一个 bar 方法，因为类在调用非静态方法的时候会传进一个self 
+指针，因此 bar 的第一个参数我们简单的忽略即可，其运行结果如下:
+>>>>>>>>>>>>>>>>>>>>>>>
+bar  
+
+--------------------------------------
+同样的也存在类装饰器
+类装饰器相比函数装饰器，具有灵活度大，高内聚、封装性等优点。其实现起来主要是靠类内部的 __call__
+方法，当使用 @ 形式将装饰器附加到函数上时，就会调用此方法，下面时一个实例:
+>>>>>>>>>>>>>>>>>>>>>>>
+class Foo(object):  
+    def __init__(self, func):  
+        super(Foo, self).__init__()  
+        self._func = func  
+  
+    def __call__(self):  
+        print 'class decorator'  
+        self._func()  
+ 
+@Foo  
+def bar():  
+    print 'bar'  
+  
+bar()  
+其运行结果如下:
+>>>>>>>>>>>>>>>>>>>>>>>
+class decorator  
+bar  
+--------------------------------------
+内置装饰器
+Python中内置的装饰器有三个: staticmethod、classmethod 和property
+staticmethod 是类静态方法，其跟成员方法的区别是没有 self 指针，并且可以在类不进行实例化的情况下
+调用，下面是一个实例，对比静态方法和成员方法
+>>>>>>>>>>>>>>>>>>>>>>>
+class Foo(object):  
+    @staticmethod  
+    def statc_method(msg):  
+        print msg  
+  
+    def member_method(self, msg):  
+        print msg  
+  
+foo = Foo()  
+foo.member_method('some msg')  
+foo.statc_method('some msg')  
+Foo.statc_method('some msg')  
+其运行结果如下:
+>>>>>>>>>>>>>>>>>>>>>>>
+some msg  
+some msg  
+some msg  
+classmethod 与成员方法的区别在于所接收的第一个参数不是 self 类实例的指针，而是当前类的具体类型，
+下面是一个实例:
+>>>>>>>>>>>>>>>>>>>>>>>
+class Foo(object):  
+    @classmethod  
+    def class_method(cls):  
+        print repr(cls)  
+  
+    def member_method(self):  
+        print repr(self)  
+  
+foo = Foo()  
+foo.class_method()  
+foo.member_method()  
+其运行结果如下:
+>>>>>>>>>>>>>>>>>>>>>>>
+<class '__main__.Foo'>  
+<__main__.Foo object at 0x10a611c50>  
+property 是属性的意思，即可以通过通过类实例直接访问的信息，下面是具体的例子:
+>>>>>>>>>>>>>>>>>>>>>>>
+class Foo(object):  
+    def __init__(self, var):  
+        super(Foo, self).__init__()  
+        self._var = var  
+ 
+    @property  
+    def var(self):  
+        return self._var  
+ 
+    @var.setter  
+    def var(self, var):  
+        self._var = var  
+  
+foo = Foo('var 1')  
+print foo.var  
+foo.var = 'var 2'  
+print foo.var  
+注意: 如果将上面的 @var.setter 装饰器所装饰的成员函数去掉，则Foo.var 属性为只读属性，使用 
+foo.var = 'var 2' 进行赋值时会抛出异常，其运行结果如下:
+>>>>>>>>>>>>>>>>>>>>>>>
+var 1  
+var 2  
+注意: 如果使用老式的Python类定义，所声明的属性不是 read only的，下面代码说明了这种情况:
+>>>>>>>>>>>>>>>>>>>>>>>
+class Foo:  
+    def __init__(self, var):  
+        self._var = var  
+ 
+    @property  
+    def var(self):  
+        return self._var  
+  
+foo = Foo('var 1')  
+print foo.var  
+foo.var = 'var 2'  
+print foo.var  
+其运行结果如下:
+>>>>>>>>>>>>>>>>>>>>>>>
+var 1  
+var 2  
+--------------------------------------
+调用顺序
+装饰器的调用顺序与使用 @ 语法糖声明的顺序相反，如下所示:
+>>>>>>>>>>>>>>>>>>>>>>>
+def decorator_a(func):  
+    print "decorator_a"  
+    return func  
+  
+def decorator_b(func):  
+    print "decorator_b"  
+    return func  
+ 
+@decorator_a  
+@decorator_b  
+def foo():  
+    print "foo"  
+      
+foo()  
+其等价于:
+>>>>>>>>>>>>>>>>>>>>>>>
+def decorator_a(func):  
+    print "decorator_a"  
+    return func  
+  
+def decorator_b(func):  
+    print "decorator_b"  
+    return func  
+  
+def foo():  
+    print "foo"  
+  
+foo = decorator_a(decorator_b(foo))  
+foo()  
+通过等价的调用形式我们可以看到，按照python的函数求值序列，decorator_b(fun) 会首先被求值，
+然后将其结果作为输入，传递给decorator_a，因此其调用顺序与声明顺序相反。其运行结果如下所示:
+>>>>>>>>>>>>>>>>>>>>>>>
+decorator_b  
+decorator_a  
+foo  
+
+--------------------------------------
+调用时机
+装饰器很好用，那么它什么时候被调用？性能开销怎么样？会不会有副作用？接下来我们就以几个实例来验证我
+们的猜想。
+首先我们验证一下装饰器的性能开销，代码如下所示:
+>>>>>>>>>>>>>>>>>>>>>>>
+def decorator_a(func):  
+    print "decorator_a"  
+    print 'func id: ' + str(id(func))  
+    return func  
+  
+def decorator_b(func):  
+    print "decorator_b"  
+    print 'func id: ' + str(id(func))  
+    return func  
+  
+print 'Begin declare foo with decorators'  
+@decorator_a  
+@decorator_b  
+def foo():  
+    print "foo"  
+print 'End declare foo with decorators'  
+  
+print 'First call foo'  
+foo()  
+print 'Second call foo'  
+foo()  
+print 'Function infos'  
+print 'decorator_a id: ' + str(id(decorator_a))  
+print 'decorator_b id: ' + str(id(decorator_b))  
+print 'fooid : ' + str(id(foo))  
+其运行结果如下:
+>>>>>>>>>>>>>>>>>>>>>>>
+Begin declare foo with decorators  
+decorator_b  
+func id: 140124961990488  
+decorator_a  
+func id: 140124961990488  
+End declare foo with decorators  
+First call foo  
+foo  
+Second call foo  
+foo  
+Function infos  
+decorator_a id: 140124961954464  
+decorator_b id: 140124961988808  
+fooid : 140124961990488  
+在运行结果中的:
+>>>>>>>>>>>>>>>>>>>>>>>
+Begin declare foo with decorators  
+decorator_b  
+func id: 140124961990488  
+decorator_a  
+func id: 140124961990488  
+End declare foo with decorators  
+证实了装饰器的调用时机为: 被装饰对象定义时
+而运行结果中的:
+>>>>>>>>>>>>>>>>>>>>>>>
+First call foo  
+foo  
+Second call foo  
+foo  
+证实了在相同 .py 文件中，装饰器对所装饰的函数只进行一次装饰，不会每次调用相应函数时都重新装饰，
+这个很容易理解，因为其本质等价于下面的函数签名重新绑定:
+>>>>>>>>>>>>>>>>>>>>>>>
+foo = decorator_a(decorator_b(foo))  
+对于跨模块的调用，我们编写如下结构的测试代码:
+[ruby] view plain copy print?
+.  
+├── common  
+│   ├── decorator.py  
+│   ├── __init__.py  
+│   ├── mod_a  
+│   │   ├── fun_a.py  
+│   │   └── __init__.py  
+│   └── mod_b  
+│       ├── fun_b.py  
+│       └── __init__.py  
+└── test.py  
+上述所有模块中的 __init__.py 文件均为: # -*- coding: utf-8 -*-
+>>>>>>>>>>>>>>>>>>>>>>>
+# -*- coding: utf-8 -*-  
+# common/mod_a/fun_a.py  
+  
+  
+from common.decorator import foo  
+  
+  
+def fun_a():  
+    print 'in common.mod_a.fun_a.fun_a call foo'  
+    foo()  
+>>>>>>>>>>>>>>>>>>>>>>>
+# -*- coding: utf-8 -*-  
+# common/mod_b/fun_b.py  
+  
+from common.decorator import foo  
+  
+def fun_b():  
+    print 'in common.mod_b.fun_b.fun_b call foo'  
+    foo()  
+>>>>>>>>>>>>>>>>>>>>>>>
+# -*- coding: utf-8 -*-  
+# common/decorator.py  
+  
+def decorator_a(func):  
+    print 'init decorator_a'  
+    return func  
+ 
+@decorator_a  
+def foo():  
+    print 'function foo'  
+>>>>>>>>>>>>>>>>>>>>>>>
+# -*- coding: utf-8 -*-  
+# test.py  
+  
+from common.mod_a.fun_a import fun_a  
+from common.mod_b.fun_b import fun_b  
+  
+fun_a()  
+fun_b()  
+上述代码通过创建 common.mod_a 和 common.mod_b 两个子模块，并调用common.decorator 中的
+ foo 函数，来测试跨模块时装饰器的工作情况，运行 test.py 的结果如下所示:
+>>>>>>>>>>>>>>>>>>>>>>>
+init decorator_a  
+in common.mod_a.fun_a.fun_a call foo  
+function foo  
+in common.mod_b.fun_b.fun_b call foo  
+function foo  
+经过上面的验证，可以看出，对于跨模块的调用，装饰器也只会初始化一次，不过这要归功于 *.pyc，这与本
+文主题无关，故不详述。
+关于装饰器副作用的话题比较大，这不仅仅是装饰器本身的问题，更多的时候是我们设计上的问题，下面给出一
+个初学装饰器时大家都会遇到的一个问题——丢失函数元信息:
+>>>>>>>>>>>>>>>>>>>>>>>
+def decorator_a(func):  
+    def inner(*args, **kwargs):  
+        res = func(*args, **kwargs)  
+        return res  
+    return inner  
+ 
+@decorator_a  
+def foo():  
+    '''''foo doc'''  
+    return 'foo result'  
+  
+print 'foo.__module__: ' + str(foo.__module__)  
+print 'foo.__name__: ' + str(foo.__name__)  
+print 'foo.__doc__: ' + str(foo.__doc__)  
+print foo()  
+其运行结果如下所示:
+>>>>>>>>>>>>>>>>>>>>>>>
+foo.__module__: __main__  
+foo.__name__: inner  
+foo.__doc__: None  
+foo result  
+我们可以看到，在使用 decorator_a 对 foo 函数进行装饰后，foo 的元信息会丢失，解决方案参见: 
+functools.wraps
+多个装饰器运行期行为
+前面已经讲解过装饰器的调用顺序和调用时机，但是被多个装饰器装饰的函数，其运行期行为还是有一些细节
+需要说明的，而且很可能其行为会让你感到惊讶，下面时一个实例:
+>>>>>>>>>>>>>>>>>>>>>>>
+def tracer(msg):  
+    print "[TRACE] %s" % msg  
+  
+def logger(func):  
+    tracer("logger")  
+    def inner(username, password):  
+        tracer("inner")  
+        print "call %s" % func.__name__  
+        return func(username, password)  
+    return inner  
+  
+def login_debug_helper(show_debug_info=False):  
+    tracer("login_debug_helper")  
+    def proxy_fun(func):  
+        tracer("proxy_fun")  
+        def delegate_fun(username, password):  
+            tracer("delegate_fun")  
+            if show_debug_info:  
+                print "username: %s\npassword: %s" % (username, password)  
+            return func(username, password)  
+        return delegate_fun  
+    return proxy_fun  
+  
+print 'Declaring login_a'  
+ 
+@logger  
+@login_debug_helper(show_debug_info=True)  
+def login_a(username, password):  
+    tracer("login_a")  
+    print "do some login authentication"  
+    return True  
+  
+print 'Call login_a'  
+login_a("mdl", "pwd")  
+大家先来看一下运行结果，看看是不是跟自己想象中的一致:
+>>>>>>>>>>>>>>>>>>>>>>>
+Declaring login_a  
+[TRACE] login_debug_helper  
+[TRACE] proxy_fun  
+[TRACE] logger  
+Call login_a  
+[TRACE] inner  
+call delegate_fun  
+[TRACE] delegate_fun  
+username: mdl  
+password: pwd  
+[TRACE] login_a  
+do some login authentication  
+首先，装饰器初始化时的调用顺序与我们前面讲解的一致，如下:
+>>>>>>>>>>>>>>>>>>>>>>>
+Declaring login_a  
+[TRACE] login_debug_helper  
+[TRACE] proxy_fun  
+[TRACE] logger  
+然而，接下来，来自 logger 装饰器中的 inner 函数首先被执行，然后才是login_debug_helper 返回的
+proxy_fun 中的 delegate_fun 函数。各位读者发现了吗，运行期执行login_a 函数的时候，装饰器中
+返回的函数的执行顺序是相反的，难道是我们前面讲解的例子有错误吗？其实，如果大家的认为运行期调用顺序
+应该与装饰器初始化阶段的顺序一致的话，那说明大家没有看透这段代码的调用流程，下面我来为大家分析一下。
+>>>>>>>>>>>>>>>>>>>>>>>
+def login_debug_helper(show_debug_info=False):  
+    tracer("login_debug_helper")  
+    def proxy_fun(func):  
+        tracer("proxy_fun")  
+        def delegate_fun(username, password):  
+            tracer("delegate_fun")  
+            if show_debug_info:  
+                print "username: %s\npassword: %s" % (username, password)  
+            return func(username, password)  
+        return delegate_fun  
+    return proxy_fun  
+当装饰器 login_debug_helper 被调用时，其等价于:
+>>>>>>>>>>>>>>>>>>>>>>>
+login_debug_helper(show_debug_info=True)(login_a)('mdl', 'pwd')  
+对于只有 login_debug_helper 的情况，现在就应该是执行玩login_a输出结果的时刻了，但是如果现在在
+加上logger 装饰器的话，那么这个 login_debug_helper(show_debug_info=True)(login_a)('mdl', 'pwd')
+就被延迟执行，而将 login_debug_helper(show_debug_info=True)(login_a) 作为参数传递给 logger
+，我们令 login_tmp = login_debug_helper(show_debug_info=True)(login_a)，则调用过程等价于:
+>>>>>>>>>>>>>>>>>>>>>>>
+login_tmp = login_debug_helper(show_debug_info=True)(login_a)  
+login_a = logger(login_tmp)  
+login_a('mdl', 'pwd')  
+------------------------------------
+不需要编写wrapper.__name__ = func.__name__这样的代码，Python内置的functools.wraps就是干这个事的，所以，一个完整的decorator的写法如下：
+
+import functools
+
+def log(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kw):
+        print('call %s():' % func.__name__)
+        return func(*args, **kw)
+    return wrapper
+或者针对带参数的decorator：
+
+import functools
+
+def log(text):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kw):
+            print('%s %s():' % (text, func.__name__))
+            return func(*args, **kw)
+        return wrapper
+    return decorator
+import functools是导入functools模块。模块的概念稍候讲解。现在，只需记住在定义wrapper()的前面加上@functools.wraps(func)即可。
+
