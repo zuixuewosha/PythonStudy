@@ -4,10 +4,17 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.8	//
+area	../test.1.py	/^def area(width, height):$/;"	kind:function	line:15
 area	../test.py	/^def area(width, height):$/;"	kind:function	line:15
+h	../test.1.py	/^h = 5$/;"	kind:variable	line:23
 h	../test.py	/^h = 5$/;"	kind:variable	line:23
+pay	../test.1.py	/^def pay(x,n):$/;"	kind:function	line:4
 pay	../test.py	/^def pay(x,n):$/;"	kind:function	line:4
+print_welcome	../test.1.py	/^def print_welcome(name):$/;"	kind:function	line:18
 print_welcome	../test.py	/^def print_welcome(name):$/;"	kind:function	line:18
+test.1.py	../test.1.py	1;"	kind:file	line:1
 test.py	../test.py	1;"	kind:file	line:1
+w	../test.1.py	/^w = 4$/;"	kind:variable	line:22
 w	../test.py	/^w = 4$/;"	kind:variable	line:22
+zui	../test.1.py	/^zui=pay(5,2)$/;"	kind:variable	line:11
 zui	../test.py	/^zui=pay(5,2)$/;"	kind:variable	line:11
